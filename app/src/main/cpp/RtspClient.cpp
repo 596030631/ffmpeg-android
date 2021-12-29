@@ -1,28 +1,15 @@
-//
-// Created by sjh on 2021/12/28.
-//
-extern "C" {
-#include "include/libavformat/avformat.h"
-#include "include/libavcodec/avcodec.h"
-#include "include/libswscale/swscale.h"
-}
-
 #include "RtspClient.h"
 
-RtspClient::RtspClient() {
+RtspClient::RtspClient() = default;
 
-}
-
-RtspClient::~RtspClient() {
-    recording = false;
-}
+RtspClient::~RtspClient() = default;
 
 bool RtspClient::play(const char *rtspUrl, const char *pathName) {
     recording = true;
 
-    SwsContext *img_convert_ctx;
+//    SwsContext *img_convert_ctx;
     AVFormatContext *context = avformat_alloc_context();
-    AVCodecContext *ccontext = avcodec_alloc_context3(NULL);
+    AVCodecContext *pContext = avcodec_alloc_context3(NULL);
     int video_stream_index = -1;
 
     av_register_all();
@@ -72,31 +59,36 @@ bool RtspClient::play(const char *rtspUrl, const char *pathName) {
         return false;
     }
 
-    avcodec_get_context_defaults3(ccontext, codec);
-    avcodec_copy_context(ccontext, context->streams[video_stream_index]->codec);
+    avcodec_get_context_defaults3(pContext, codec);
+    avcodec_copy_context(pContext, context->streams[video_stream_index]->codec);
 
-    if (avcodec_open2(ccontext, codec, NULL) < 0) {
+    if (avcodec_open2(pContext, codec, NULL) < 0) {
         LOGE("Cannot open codec");
         return false;
     }
 
-    img_convert_ctx = sws_getContext(ccontext->width, ccontext->height, ccontext->pix_fmt,
-                                     ccontext->width, ccontext->height,
-                                     AV_PIX_FMT_RGB24, SWS_BICUBIC, NULL, NULL, NULL);
+//    img_convert_ctx = sws_getContext(pContext->width, pContext->height, pContext->pix_fmt,
+//                                     pContext->width, pContext->height,
+//                                     AV_PIX_FMT_RGB24, SWS_BICUBIC, NULL, NULL, NULL);
 
-    auto size = (size_t) avpicture_get_size(AV_PIX_FMT_YUV420P, ccontext->width,
-                                            ccontext->height);
+    auto size = (size_t) avpicture_get_size(AV_PIX_FMT_YUV420P, pContext->width,
+                                            pContext->height);
     auto *picture_buf = (uint8_t *) (av_malloc(size));
     AVFrame *pic = av_frame_alloc();
     AVFrame *picrgb = av_frame_alloc();
-    auto size2 = (size_t) avpicture_get_size(AV_PIX_FMT_RGB24, ccontext->width, ccontext->height);
+    auto size2 = (size_t) avpicture_get_size(AV_PIX_FMT_RGB24, pContext->width, pContext->height);
     auto *picture_buf2 = (uint8_t *) (av_malloc(size2));
-    avpicture_fill((AVPicture *) pic, picture_buf, AV_PIX_FMT_YUV420P, ccontext->width,
-                   ccontext->height);
-    avpicture_fill((AVPicture *) picrgb, picture_buf2, AV_PIX_FMT_RGB24, ccontext->width,
-                   ccontext->height);
+    avpicture_fill((AVPicture *) pic, picture_buf, AV_PIX_FMT_YUV420P, pContext->width,
+                   pContext->height);
+    avpicture_fill((AVPicture *) picrgb, picture_buf2, AV_PIX_FMT_RGB24, pContext->width,
+                   pContext->height);
 
     auto f = fopen(pathName, "wb+");
+
+    timeval timeout{};
+    const int millisecond = 10;
+    timeout.tv_sec = millisecond / 1000;
+    timeout.tv_usec = millisecond % 1000 * 1000;
 
     while (recording && av_read_frame(context, &packet) >= 0) {
         if (packet.stream_index == video_stream_index) { // Packet is video
@@ -107,21 +99,23 @@ bool RtspClient::play(const char *rtspUrl, const char *pathName) {
                 stream->sample_aspect_ratio = context->streams[video_stream_index]->codec->sample_aspect_ratio;
             }
 
-            int check = 0;
-            packet.stream_index = stream->id;
-            LOGD("packet:%d", packet.size);
+//            int check = 0;
+//            packet.stream_index = stream->id;
+//            LOGD("packet:%d", packet.size);
 
             fwrite(packet.data, 1, packet.size, f);
 
 
-//            avcodec_decode_video2(ccontext, pic, &check, &packet);
+//            avcodec_decode_video2(pContext, pic, &check, &packet);
 
 //            sws_scale(img_convert_ctx, (const uint8_t *const *) pic->data, pic->linesize, 0,
-//                      ccontext->height, picrgb->data, picrgb->linesize);
+//                      pContext->height, picrgb->data, picrgb->linesize);
 //
-//            LOGD("width:%d  height:%d", ccontext->width, ccontext->height);
-//            callback(env, picture_buf2, 3, ccontext->width, ccontext->height);
+//            LOGD("width:%d  height:%d", pContext->width, pContext->height);
+//            callback(env, picture_buf2, 3, pContext->width, pContext->height);
         }
+
+//        select(0, NULL, NULL, NULL, &timeout);
 
     }
     av_free_packet(&packet);

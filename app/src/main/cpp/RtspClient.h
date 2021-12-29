@@ -4,17 +4,29 @@
 
 #ifndef FFMPEG_ANDROID_RTSPCLIENT_H
 #include "ALog.h"
+extern "C" {
+#include "include/libavformat/avformat.h"
+#include "include/libavcodec/avcodec.h"
+#include "include/libswscale/swscale.h"
+}
 #define FFMPEG_ANDROID_RTSPCLIENT_H
 
 
 class RtspClient {
 private:
     bool recording = false;
+    RtspClient();
+    ~RtspClient();
 public:
     bool play(const char *rtspUrl, const char *string);
     void stop();
-    RtspClient();
-    ~RtspClient();
+    static RtspClient& getInstance()
+    {
+        static RtspClient instance;
+        return instance;
+    }
+    RtspClient(RtspClient const&) = delete;
+    void operator=(RtspClient const&) = delete;
 };
 
 
