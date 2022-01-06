@@ -19,7 +19,7 @@ class MainActivity : AppCompatActivity() {
 
         binding.btnStart.setOnClickListener {
             Thread{
-                val rtspUrl = "rtsp://admin:123456@192.168.1.10:554/cam/realmonitor?channel=1&subtype=1"
+                val rtspUrl = "rtsp://admin:123456@192.168.31.46:3389/cam/realmonitor?channel=1&subtype=1"
                 val pathName = "/sdcard/${SystemClock.elapsedRealtime()}.h264"
                 play(rtspUrl, pathName)
             }.start()
