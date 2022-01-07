@@ -3,12 +3,6 @@
 #include <unistd.h>
 #include "RtspClient.h"
 
-extern "C" {
-#include "include/libavcodec/avcodec.h"
-#include "include/libavutil/avutil.h"
-#include "include/libavformat/avformat.h"
-}
-
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_et_ffmpeg_MainActivity_stringFromJNI(
         JNIEnv *env,

@@ -5,9 +5,9 @@
 #ifndef FFMPEG_ANDROID_RTSPCLIENT_H
 #include "ALog.h"
 extern "C" {
-#include "include/libavformat/avformat.h"
-#include "include/libavcodec/avcodec.h"
-#include "include/libswscale/swscale.h"
+#include "libavformat/avformat.h"
+#include "libavcodec/avcodec.h"
+#include "libswscale/swscale.h"
 }
 #define FFMPEG_ANDROID_RTSPCLIENT_H
 

@@ -16,18 +16,22 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <Button
+            android:layout_margin="16dp"
+            android:layout_weight="1"
             android:id="@+id/btn_start"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="开始录制"
-            android:textSize="20sp" />
+            android:textSize="30sp" />
 
         <Button
+            android:layout_margin="16dp"
+            android:layout_weight="1"
             android:id="@+id/btn_stop"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="结束录制"
-            android:textSize="20sp" />
+            android:textSize="30sp" />
 
     </LinearLayout>
 

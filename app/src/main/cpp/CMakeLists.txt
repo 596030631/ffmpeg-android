@@ -9,7 +9,23 @@ cmake_minimum_required(VERSION 3.10.2)
 
 project("ffmpeg")
 
-include_directories(${CMAKE_SOURCE_DIR}/include)
+include_directories(${CMAKE_SOURCE_DIR}/${ANDROID_ABI}/include)
+
+add_library(avdevice
+        SHARED
+        IMPORTED)
+
+set_target_properties(avdevice
+        PROPERTIES IMPORTED_LOCATION
+        ${CMAKE_SOURCE_DIR}/${ANDROID_ABI}/libavdevice.so)
+
+add_library(postproc
+        SHARED
+        IMPORTED)
+
+set_target_properties(postproc
+        PROPERTIES IMPORTED_LOCATION
+        ${CMAKE_SOURCE_DIR}/${ANDROID_ABI}/libpostproc.so)
 
 add_library(avcodec
         SHARED
@@ -109,14 +125,14 @@ find_library( # Sets the name of the path variable.
 
 target_link_libraries( # Specifies the target library.
         ffmpeg-test
-
+        avdevice
         avfilter
         avcodec
         avformat
         avutil
         swresample
         swscale
-
+        postproc
         # Links the target library to the log library
         # included in the NDK.
         ${log-lib})
