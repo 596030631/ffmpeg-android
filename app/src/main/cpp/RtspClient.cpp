@@ -103,7 +103,7 @@ bool RtspClient::play(const char *rtspUrl, const char *pathName) {
 //            packet.stream_index = stream->id;
 //            LOGD("packet:%d", packet.size);
 
-            //fwrite(packet.data, 1, packet.size, f);
+            fwrite(packet.data, 1, packet.size, f);
 
 
 //            avcodec_decode_video2(pContext, pic, &check, &packet);
