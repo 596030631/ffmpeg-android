@@ -19,9 +19,6 @@ android {
                 cppFlags '-frtti -fexceptions'
             }
         }
-        ndk {
-            abiFilters 'armeabi-v7a'
-        }
     }
 
     buildTypes {
@@ -43,13 +40,14 @@ android {
     }
     externalNativeBuild {
         cmake {
-            path file('src/main/cpp/CMakeLists.txt')
+            path file('src/main/jni/CMakeLists.txt')
             version '3.10.2'
         }
     }
     buildFeatures {
         viewBinding true
     }
+    ndkVersion '21.4.7075529'
 }
 
 dependencies {
