@@ -15,12 +15,19 @@ extern "C" {
 
 class RtspClient {
 private:
+    bool running = true;
     bool recording = false;
+
+    FILE* f;
     RtspClient();
     ~RtspClient();
 public:
-    bool play(const char *rtspUrl, const char *string);
+    bool open(const char *rtspUrl);
+    void close();
+
+    void start(const char *pathName);
     void stop();
+
     static RtspClient& getInstance()
     {
         static RtspClient instance;

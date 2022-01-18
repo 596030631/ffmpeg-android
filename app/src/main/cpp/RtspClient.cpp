@@ -1,11 +1,13 @@
 #include "RtspClient.h"
 
-RtspClient::RtspClient() = default;
+RtspClient::RtspClient() {
+    f = nullptr;
+};
 
 RtspClient::~RtspClient() = default;
 
-bool RtspClient::play(const char *rtspUrl, const char *pathName) {
-    recording = true;
+bool RtspClient::open(const char *rtspUrl) {
+    running = true;
 
 //    SwsContext *img_convert_ctx;
     AVFormatContext *context = avformat_alloc_context();
@@ -82,14 +84,19 @@ bool RtspClient::play(const char *rtspUrl, const char *pathName) {
     avpicture_fill((AVPicture *) picrgb, picture_buf2, AV_PIX_FMT_RGB24, pContext->width,
                    pContext->height);
 
-    auto f = fopen(pathName, "wb+");
 
     timeval timeout{};
     const int millisecond = 10;
     timeout.tv_sec = millisecond / 1000;
     timeout.tv_usec = millisecond % 1000 * 1000;
 
-    while (recording && av_read_frame(context, &packet) >= 0) {
+
+    while (running && av_read_frame(context, &packet) >= 0) {
+        if (!recording && f) {
+            fflush(f);
+            fclose(f);
+            f = nullptr;
+        }
         if (packet.stream_index == video_stream_index) { // Packet is video
             if (stream == NULL) {
                 stream = avformat_new_stream(oc,
@@ -102,9 +109,9 @@ bool RtspClient::play(const char *rtspUrl, const char *pathName) {
 //            packet.stream_index = stream->id;
 //            LOGD("packet:%d", packet.size);
 
-            fwrite(packet.data, 1, packet.size, f);
-
-
+            if (f && recording) {
+                fwrite(packet.data, 1, packet.size, f);
+            }
 //            avcodec_decode_video2(pContext, pic, &check, &packet);
 
 //            sws_scale(img_convert_ctx, (const uint8_t *const *) pic->data, pic->linesize, 0,
@@ -112,11 +119,14 @@ bool RtspClient::play(const char *rtspUrl, const char *pathName) {
 //
 //            LOGD("width:%d  height:%d", pContext->width, pContext->height);
 //            callback(env, picture_buf2, 3, pContext->width, pContext->height);
-        }
 
+            LOGD("*");
+        }
 //        select(0, NULL, NULL, NULL, &timeout);
 
-        av_usleep(10 * 1000);
+        LOGD("_");
+
+//        av_usleep(30 * 1000);
     }
     av_free_packet(&packet);
 //    av_init_packet(&packet);
@@ -133,6 +143,16 @@ bool RtspClient::play(const char *rtspUrl, const char *pathName) {
     avformat_free_context(oc);
     avformat_close_input(&context);
     return true;
+}
+
+void RtspClient::close() {
+    running = false;
+}
+
+void RtspClient::start(const char *_pathName) {
+    LOGD("文件路径 >>> %s", _pathName);
+    recording = true;
+    f = fopen(_pathName, "wb+");
 }
 
 void RtspClient::stop() {

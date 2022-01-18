@@ -3,22 +3,30 @@
 #include <unistd.h>
 #include "RtspClient.h"
 
-extern "C" JNIEXPORT jstring JNICALL
-Java_com_et_ffmpeg_MainActivity_stringFromJNI(
+extern "C" JNIEXPORT void JNICALL
+Java_com_et_ffmpeg_MainActivity_open(
+        JNIEnv *env,
+        jobject /* this */, jstring rtspUrl) {
+    const char * c_rtspUrl = env->GetStringUTFChars(rtspUrl,JNI_FALSE);
+    RtspClient::getInstance().open(c_rtspUrl);
+    env->ReleaseStringUTFChars(rtspUrl, c_rtspUrl);
+}
+
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_et_ffmpeg_MainActivity_close(
         JNIEnv *env,
         jobject /* this */) {
-    return env->NewStringUTF(avcodec_configuration());
+    RtspClient::getInstance().close();
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_et_ffmpeg_MainActivity_play(
+Java_com_et_ffmpeg_MainActivity_start(
         JNIEnv *env,
-        jobject /* this */, jstring rtspUrl, jstring pathName) {
-    const char * c_rtspUrl = env->GetStringUTFChars(rtspUrl,JNI_FALSE);
+        jobject /* this */, jstring pathName) {
     const char * c_pathName = env->GetStringUTFChars(pathName,JNI_FALSE);
-    RtspClient::getInstance().play(c_rtspUrl, c_pathName);
-    env->ReleaseStringUTFChars(rtspUrl, c_rtspUrl);
-    env->ReleaseStringUTFChars(rtspUrl, c_pathName);
+    RtspClient::getInstance().start(c_pathName);
+    env->ReleaseStringUTFChars(pathName, c_pathName);
 }
 
 

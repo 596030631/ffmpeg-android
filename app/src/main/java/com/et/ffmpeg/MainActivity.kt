@@ -27,32 +27,36 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.btnStart.setOnClickListener {
+        binding.btnOpen.setOnClickListener {
             Thread {
-                Log.d(TAG, "开始录制")
+                Log.d(TAG, "连接相机")
                 val rtspUrl =
                     "rtsp://admin:123456@58.56.152.66:8073/stream0"
 //                    "rtsp://admin:123456@192.168.31.46:3389/cam/realmonitor?channel=1&subtype=1"
-                val pathName = "/sdcard/${SystemClock.elapsedRealtime()}.h264"
-                play(rtspUrl, pathName)
+                open(rtspUrl)
             }.start()
         }
 
+        binding.btnClose.setOnClickListener {
+            Log.d(TAG, "关闭相机")
+            close()
+        }
+
+        binding.btnStart.setOnClickListener {
+            val pathName = "/sdcard/${SystemClock.elapsedRealtime()}.h264"
+            start(pathName)
+        }
+
         binding.btnStop.setOnClickListener {
-            Log.d(TAG, "结束录制")
             stop()
         }
     }
 
-    /**
-     * A native method that is implemented by the 'ffmpeg' native library,
-     * which is packaged with this application.
-     */
-    external fun stringFromJNI(): String
-
-    private external fun play(rtspUrl: String, pathName: String)
+    private external fun open(rtspUrl: String)
+    private external fun start(pathName: String)
 
     external fun stop()
+    external fun close()
 
     companion object {
         const val TAG = "MainActivity"
