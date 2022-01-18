@@ -12,7 +12,6 @@ bool RtspClient::play(const char *rtspUrl, const char *pathName) {
     AVCodecContext *pContext = avcodec_alloc_context3(NULL);
     int video_stream_index = -1;
 
-    av_register_all();
     avformat_network_init();
 
     AVDictionary *option = NULL;
@@ -117,6 +116,7 @@ bool RtspClient::play(const char *rtspUrl, const char *pathName) {
 
 //        select(0, NULL, NULL, NULL, &timeout);
 
+        av_usleep(10 * 1000);
     }
     av_free_packet(&packet);
 //    av_init_packet(&packet);
