@@ -116,7 +116,7 @@ bool RtspClient::play(const char *rtspUrl, const char *pathName) {
         }
 
 //        select(0, NULL, NULL, NULL, &timeout);
-
+av_usleep(10*1000);
     }
     av_free_packet(&packet);
 //    av_init_packet(&packet);

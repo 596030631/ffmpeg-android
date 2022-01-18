@@ -18,22 +18,15 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        if (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
-            } else {
-                TODO("VERSION.SDK_INT < M")
-            }
-        ) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                requestPermissions(arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), 1)
-            }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
         }
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         binding.btnStart.setOnClickListener {
             Thread {
-                Log.d(TAG,"开始录制")
+                Log.d(TAG, "开始录制")
                 val rtspUrl =
                     "rtsp://admin:123456@192.168.31.46:3389/cam/realmonitor?channel=1&subtype=1"
                 val pathName = "/sdcard/${SystemClock.elapsedRealtime()}.h264"
@@ -42,7 +35,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.btnStop.setOnClickListener {
-            Log.d(TAG,"结束录制")
+            Log.d(TAG, "结束录制")
             stop()
         }
     }
@@ -59,6 +52,7 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         const val TAG = "MainActivity"
+
         // Used to load the 'ffmpeg' library on application startup.
         init {
             System.loadLibrary("ffmpeg-test")
