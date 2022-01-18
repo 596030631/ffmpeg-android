@@ -11,23 +11,23 @@ bool RtspClient::open(const char *rtspUrl) {
 
 //    SwsContext *img_convert_ctx;
     AVFormatContext *context = avformat_alloc_context();
-    AVCodecContext *pContext = avcodec_alloc_context3(NULL);
+    AVCodecContext *pContext = avcodec_alloc_context3(nullptr);
     int video_stream_index = -1;
 
     avformat_network_init();
 
-    AVDictionary *option = NULL;
+    AVDictionary *option = nullptr;
     av_dict_set(&option, "rtsp_transport", "tcp", 0);
 
     // Open RTSP
-    if (int err = avformat_open_input(&context, rtspUrl, NULL, &option) != 0) {
+    if (int err = avformat_open_input(&context, rtspUrl, nullptr, &option) != 0) {
         LOGE("Cannot open input %s, error code: %d", rtspUrl, err);
         return false;
     }
 
     av_dict_free(&option);
 
-    if (avformat_find_stream_info(context, NULL) < 0) {
+    if (avformat_find_stream_info(context, nullptr) < 0) {
         LOGE("Cannot find stream info");
         return false;
     }
@@ -48,7 +48,7 @@ bool RtspClient::open(const char *rtspUrl) {
 
     // Open output file
     AVFormatContext *oc = avformat_alloc_context();
-    AVStream *stream = NULL;
+    AVStream *stream = nullptr;
 
     // Start reading packets from stream and write them to file
     av_read_play(context);
