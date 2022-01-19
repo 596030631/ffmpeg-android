@@ -31,8 +31,8 @@ class MainActivity : AppCompatActivity() {
             Thread {
                 Log.d(TAG, "连接相机")
                 val rtspUrl =
-                    "rtsp://admin:123456@58.56.152.66:8073/stream0"
-//                    "rtsp://admin:123456@192.168.31.46:3389/cam/realmonitor?channel=1&subtype=1"
+//                    "rtsp://admin:123456@58.56.152.66:8073/stream0"
+                    "rtsp://admin:123456@192.168.31.46:3389/stream0"
                 open(rtspUrl)
             }.start()
         }
