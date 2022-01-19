@@ -1,14 +1,28 @@
 #include "RtspClient.h"
 
 RtspClient::RtspClient() {
-    f = nullptr;
-};
+    out_filename = nullptr;
+}
 
 RtspClient::~RtspClient() = default;
+
+
+void RtspClient::log_packet(const AVFormatContext *fmt_ctx, const AVPacket *pkt, const char *tag) {
+    AVRational *time_base = &fmt_ctx->streams[pkt->stream_index]->time_base;
+
+    printf("%s: pts:%s pts_time:%s dts:%s dts_time:%s duration:%s duration_time:%s stream_index:%d\n",
+           tag,
+           av_ts2str(pkt->pts), av_ts2timestr(pkt->pts, time_base),
+           av_ts2str(pkt->dts), av_ts2timestr(pkt->dts, time_base),
+           av_ts2str(pkt->duration), av_ts2timestr(pkt->duration, time_base),
+           pkt->stream_index);
+}
 
 bool RtspClient::open(const char *rtspUrl) {
     running = true;
 
+
+    /**
 //    SwsContext *img_convert_ctx;
     AVFormatContext *context = avformat_alloc_context();
     AVCodecContext *pContext = avcodec_alloc_context3(nullptr);
@@ -142,6 +156,167 @@ bool RtspClient::open(const char *rtspUrl) {
     avio_close(oc->pb);
     avformat_free_context(oc);
     avformat_close_input(&context);
+//    return true;
+
+*/
+
+
+
+
+
+
+
+
+
+
+    const AVOutputFormat *ofmt = nullptr;
+    AVFormatContext *ifmt_ctx = nullptr;
+    AVFormatContext *ofmt_ctx = nullptr;
+    AVPacket *pkt = nullptr;
+    int ret, i;
+    int stream_index = 0;
+    int *stream_mapping = nullptr;
+    unsigned int stream_mapping_size;
+
+    pkt = av_packet_alloc();
+    if (!pkt) {
+        LOGD("Could not allocate AVPacket");
+        return false;
+    }
+
+    AVDictionary *rtsp_option = nullptr;
+    av_dict_set(&rtsp_option, "rtsp_transport", "tcp", 0);
+
+    if ((ret = avformat_open_input(&ifmt_ctx, rtspUrl, nullptr, &rtsp_option)) < 0) {
+        LOGD("Could not open '%s'", rtspUrl);
+        goto end;
+    }
+
+    if ((ret = avformat_find_stream_info(ifmt_ctx, 0)) < 0) {
+        LOGD("Failed to retrieve input stream information");
+        goto end;
+    }
+
+    av_dump_format(ifmt_ctx, 0, rtspUrl, 0);
+
+    stream_mapping_size = ifmt_ctx->nb_streams;
+    stream_mapping = static_cast<int *>(av_calloc(stream_mapping_size, sizeof(*stream_mapping)));
+    if (!stream_mapping) {
+        ret = AVERROR(ENOMEM);
+        goto end;
+    }
+
+    avformat_alloc_output_context2(&ofmt_ctx, nullptr, nullptr, out_filename);
+    if (!ofmt_ctx) {
+        LOGD("Could not create output context");
+        ret = AVERROR_UNKNOWN;
+        goto end;
+    }
+
+
+
+    ofmt = ofmt_ctx->oformat;
+
+    for (i = 0; i < ifmt_ctx->nb_streams; i++) {
+        AVStream *out_stream;
+        AVStream *in_stream = ifmt_ctx->streams[i];
+        AVCodecParameters *in_codecpar = in_stream->codecpar;
+
+        if (in_codecpar->codec_type != AVMEDIA_TYPE_VIDEO &&
+            in_codecpar->codec_type != AVMEDIA_TYPE_SUBTITLE) {
+            stream_mapping[i] = -1;
+            continue;
+        }
+
+        stream_mapping[i] = stream_index++;
+
+        out_stream = avformat_new_stream(ofmt_ctx, nullptr);
+        if (!out_stream) {
+            LOGD("Failed allocating output stream");
+            ret = AVERROR_UNKNOWN;
+            goto end;
+        }
+
+        ret = avcodec_parameters_copy(out_stream->codecpar, in_codecpar);
+        if (ret < 0) {
+            LOGD("Failed to copy codec parameters");
+            goto end;
+        }
+        out_stream->codecpar->codec_tag = 0;
+    }
+    av_dump_format(ofmt_ctx, 0, out_filename, 1);
+
+    if (!(ofmt->flags & AVFMT_NOFILE)) {
+        ret = avio_open(&ofmt_ctx->pb, out_filename, AVIO_FLAG_WRITE);
+        if (ret < 0) {
+            LOGD("Could not open output file '%s'", out_filename);
+            goto end;
+        }
+    }
+
+    ret = avformat_write_header(ofmt_ctx, nullptr);
+    if (ret < 0) {
+        LOGE("Error occurred when opening output file:%d", ret);
+        goto end;
+    }
+
+    while (running) {
+        AVStream *in_stream, *out_stream;
+
+        ret = av_read_frame(ifmt_ctx, pkt);
+        if (ret < 0)
+            break;
+
+        in_stream = ifmt_ctx->streams[pkt->stream_index];
+        if (pkt->stream_index >= stream_mapping_size ||
+            stream_mapping[pkt->stream_index] < 0) {
+            av_packet_unref(pkt);
+            continue;
+        }
+
+
+        if ()
+
+
+
+        pkt->stream_index = stream_mapping[pkt->stream_index];
+        out_stream = ofmt_ctx->streams[pkt->stream_index];
+        log_packet(ifmt_ctx, pkt, "in");
+
+        /* copy packet */
+        av_packet_rescale_ts(pkt, in_stream->time_base, out_stream->time_base);
+        pkt->pos = -1;
+        log_packet(ofmt_ctx, pkt, "out");
+
+        ret = av_interleaved_write_frame(ofmt_ctx, pkt);
+        /* pkt is now blank (av_interleaved_write_frame() takes ownership of
+         * its contents and resets pkt), so that no unreferencing is necessary.
+         * This would be different if one used av_write_frame(). */
+        if (ret < 0) {
+            LOGD("Error muxing packet");
+            break;
+        }
+    }
+
+    av_write_trailer(ofmt_ctx);
+    end:
+    av_packet_free(&pkt);
+
+    avformat_close_input(&ifmt_ctx);
+
+    /* close output */
+    if (ofmt_ctx && !(ofmt->flags & AVFMT_NOFILE))
+        avio_closep(&ofmt_ctx->pb);
+
+    avformat_free_context(ofmt_ctx);
+
+    av_freep(&stream_mapping);
+
+    if (ret < 0 && ret != AVERROR_EOF) {
+        LOGD("Error occurred: %s", av_err2str(ret));
+        return false;
+    }
+
     return true;
 }
 
@@ -150,9 +325,11 @@ void RtspClient::close() {
 }
 
 void RtspClient::start(const char *_pathName) {
-    LOGD("文件路径 >>> %s", _pathName);
     recording = true;
-    f = fopen(_pathName, "wb+");
+    if (out_filename) delete(out_filename);
+    out_filename = new char [strlen(_pathName) + 1];
+    strcpy(out_filename, _pathName);
+    LOGD("文件路径 >>> %s", out_filename);
 }
 
 void RtspClient::stop() {

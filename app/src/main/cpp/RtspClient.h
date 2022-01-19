@@ -9,6 +9,7 @@ extern "C" {
 #include "libavcodec/avcodec.h"
 #include "libswscale/swscale.h"
 #include <libavutil/time.h>
+#include <libavutil/timestamp.h>
 }
 #define FFMPEG_ANDROID_RTSPCLIENT_H
 
@@ -17,8 +18,8 @@ class RtspClient {
 private:
     bool running = true;
     bool recording = false;
-
-    FILE* f;
+    static void log_packet(const AVFormatContext *fmt_ctx, const AVPacket *pkt, const char *tag);
+    char* out_filename;
     RtspClient();
     ~RtspClient();
 public:
