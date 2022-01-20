@@ -9,6 +9,7 @@ import android.os.SystemClock
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import com.et.ffmpeg.databinding.ActivityMainBinding
+import java.text.SimpleDateFormat
 
 class MainActivity : AppCompatActivity() {
 
@@ -32,7 +33,7 @@ class MainActivity : AppCompatActivity() {
                 Log.d(TAG, "连接相机")
                 val rtspUrl =
 //                    "rtsp://admin:123456@58.56.152.66:8073/stream0"
-                    "rtsp://admin:123456@192.168.31.46:3389/stream0"
+                    "rtsp://admin:123456@192.168.31.46:3389/stream1"
                 open(rtspUrl)
             }.start()
         }
@@ -43,8 +44,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.btnStart.setOnClickListener {
-            val pathName = "/sdcard/${SystemClock.elapsedRealtime()}.h264"
-            start(pathName)
+            SimpleDateFormat("yyyyMMddHHmmss").format(System.currentTimeMillis()).apply {
+                val pathName = "/sdcard/${this}.h264"
+                start(pathName)
+            }
         }
 
         binding.btnStop.setOnClickListener {
