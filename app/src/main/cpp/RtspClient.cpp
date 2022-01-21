@@ -53,6 +53,7 @@ bool RtspClient::open(const char *rtspUrl) {
         LOGW("codec_type %d", in_codecpar->codec_type);
         if (in_codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
             video_trade_index = i;
+            break;
         }
     }
 
