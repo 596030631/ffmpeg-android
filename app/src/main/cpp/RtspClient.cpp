@@ -13,7 +13,7 @@ RtspClient::~RtspClient() = default;
 void RtspClient::log_packet(const AVFormatContext *fmt_ctx, const AVPacket *pkt, const char *tag) {
     AVRational *time_base = &fmt_ctx->streams[pkt->stream_index]->time_base;
 
-    printf("%s: pts:%s pts_time:%s dts:%s dts_time:%s duration:%s duration_time:%s stream_index:%d\n",
+    LOGI("%s: pts:%s pts_time:%s dts:%s dts_time:%s duration:%s duration_time:%s stream_index:%d",
            tag,
            av_ts2str(pkt->pts), av_ts2timestr(pkt->pts, time_base),
            av_ts2str(pkt->dts), av_ts2timestr(pkt->dts, time_base),
@@ -23,6 +23,9 @@ void RtspClient::log_packet(const AVFormatContext *fmt_ctx, const AVPacket *pkt,
 
 bool RtspClient::open(const char *rtspUrl) {
     running = true;
+    av_register_all();
+    avformat_network_init();
+
     AVPacket *pkt = nullptr;
     int ret;
 
@@ -33,7 +36,7 @@ bool RtspClient::open(const char *rtspUrl) {
     }
 
     AVDictionary *rtsp_option = nullptr;
-    av_dict_set(&rtsp_option, "rtsp_transport", "tcp", 0);
+    av_dict_set(&rtsp_option, "rtsp_transport", "udp", 0);
     ret = avformat_open_input(&ifmt_ctx, rtspUrl, nullptr, &rtsp_option);
     if (ret < 0) {
         LOGD("Could not open '%s' %d", rtspUrl, ret);
@@ -58,7 +61,7 @@ bool RtspClient::open(const char *rtspUrl) {
     }
 
 
-    LOGD("ready");
+    LOGD("摄像头连接完成");
     while (running) {
         AVStream *in_stream, *out_stream;
         ret = av_read_frame(ifmt_ctx, pkt);
@@ -72,11 +75,13 @@ bool RtspClient::open(const char *rtspUrl) {
             continue;
         }
 
+        av_usleep(20*1000);
+        LOGI("stream:%d", video_trade_index);
+
         if (recording && ofmt_ctx) {
             pkt->stream_index = video_trade_index;
             out_stream = ofmt_ctx->streams[pkt->stream_index];
             log_packet(ifmt_ctx, pkt, "in");
-            LOGE("stream_index:%d", video_trade_index);
 
             /* copy packet */
             av_packet_rescale_ts(pkt, in_stream->time_base, out_stream->time_base);
@@ -111,7 +116,7 @@ void RtspClient::close() {
 }
 
 void RtspClient::start(const char *out_filename) {
-    if (ofmt_ctx) {
+    if (ofmt_ctx || video_trade_index < 0) {
         LOGE("NOT READY");
     }
     int ret;

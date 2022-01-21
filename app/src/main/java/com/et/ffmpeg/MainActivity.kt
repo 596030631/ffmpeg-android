@@ -33,6 +33,7 @@ class MainActivity : AppCompatActivity() {
                 Log.d(TAG, "连接相机")
                 val rtspUrl =
 //                    "rtsp://admin:123456@58.56.152.66:8073/stream0"
+//                    "rtsp://admin:123456@192.168.1.12/stream0"
                     "rtsp://admin:123456@192.168.31.46/stream0"
 //                    "rtsp://admin:123456@192.168.31.46:3389/stream1"
                 open(rtspUrl)

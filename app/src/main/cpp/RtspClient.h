@@ -11,6 +11,7 @@ extern "C" {
 #include "libavformat/avformat.h"
 #include "libavcodec/avcodec.h"
 #include "libswscale/swscale.h"
+#include "libavutil/time.h"
 #include <libavutil/timestamp.h>
 }
 #define FFMPEG_ANDROID_RTSPCLIENT_H
@@ -25,7 +26,7 @@ private:
 
     AVFormatContext *ifmt_ctx;
     AVCodecParameters *in_codecpar;
-    int video_trade_index = 0;
+    int video_trade_index = -1;
     AVFormatContext *ofmt_ctx;
     AVOutputFormat *ofmt;
 
